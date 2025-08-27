@@ -1,5 +1,5 @@
 import { Outlet } from "react-router"
-import Header from '@/views/layouts/header'
+import Header from '@app/views/layouts/header'
 
 const App = () =>{
     return (

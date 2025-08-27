@@ -1,22 +1,30 @@
 import React, { useState } from 'react';
-import { AppstoreOutlined, MailOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, HomeOutlined, LoginOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
+import { Link } from 'react-router';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
 const items: MenuItem[] = [
   {
-    label: 'Navigation One',
-    key: 'mail',
-    icon: <MailOutlined />,
+    label: <Link to={"/"}>Home</Link>,
+    key: 'home',
+    icon: <HomeOutlined />,
   },
   {
-    label: 'Navigation Two',
-    key: 'app',
+    label: <Link to={"/register"}>Register</Link>,
+    key: 'register',
     icon: <AppstoreOutlined />,
-    
+
+  },
+    {
+    label: <Link to={"/login"}>Login</Link>,
+    key: 'login',
+    icon: <LoginOutlined />,
+
   }
+
 ];
 
 const Header: React.FC = () => {

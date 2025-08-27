@@ -10,14 +10,15 @@
     //tsconfig
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
+      "@app/*": ["./src/*"],
       "assets/*": ["./src/assets/*"],
       "components/*": ["./src/components/*"],
       "hooks/*": ["./src/hooks/*"],
       "services/*": ["./src/services/*"],
       "styles/*": ["./src/styles/*"],
       "utils/*": ["./src/utils/*"],
-      "views/*": ["./src/views/*"]
+      "views/*": ["./src/views/*"],
+      "types/*": ["./src/types/*"],
     },
 
     /* Bundler mode */
