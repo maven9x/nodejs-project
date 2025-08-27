@@ -27,6 +27,7 @@ const LoginForm = () => {
  * @param values - Đối tượng chứa dữ liệu từ các trường của form.
  */
   const onFinish = async (values: ILoginCredentials) => {
+
     setIsLoading(true);
     try {
 
@@ -61,10 +62,6 @@ const LoginForm = () => {
       } else {
         messageApi.error(errorMessage);
       }
-
-
-
-
 
     } else {
       // Xử lý các loại lỗi khác không phải từ API client (ví dụ: lỗi mạng, lỗi code...)
