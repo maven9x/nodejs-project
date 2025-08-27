@@ -29,6 +29,7 @@ const LoginForm = () => {
   const onFinish = async (values: ILoginCredentials) => {
     setIsLoading(true);
     try {
+
       // Gọi hàm register từ service với dữ liệu từ form
       await authService.login(values);
 
@@ -40,24 +41,30 @@ const LoginForm = () => {
 
 
     } catch (error) {
-
+                          
     if (error instanceof ApiClientError) {
 
       const apiErrorData = error.data as IApiError;
-      console.log(apiErrorData.message);
-      return;
       let errorMessage = 'Lỗi không xác định';
+
+      
+
       if (apiErrorData?.message) {
         errorMessage = Array.isArray(apiErrorData.message)
           ? apiErrorData.message.join('. ')
           : apiErrorData.message;
       }
+
       // Xử lý hiển thị lỗi như cũ
       if (errorMessage.toLowerCase().includes('username')) {
         form.setFields([{ name: 'username', errors: [errorMessage] }]);
       } else {
         messageApi.error(errorMessage);
       }
+
+
+
+
 
     } else {
       // Xử lý các loại lỗi khác không phải từ API client (ví dụ: lỗi mạng, lỗi code...)
