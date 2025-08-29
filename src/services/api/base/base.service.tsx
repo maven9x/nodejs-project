@@ -115,11 +115,9 @@ class ApiBaseService {
             if (!this.refreshPromise) {
                 this.refreshPromise = this.options.onTokenRefresh();
             }
-
             try {
                 const newToken = await this.refreshPromise;
                 storage.setItem(STORAGE_KEYS.AUTH_TOKEN, newToken);
-
                 const originalConfig = error.config;
                 if (originalConfig) {
                     this.setAuthHeader(originalConfig, newToken);
@@ -144,8 +142,6 @@ class ApiBaseService {
         storage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
         if (this.options.onUnauthorized) {
             this.options.onUnauthorized();
-        } else if (typeof window !== 'undefined') {
-            window.location.href = '/login';
         }
     }
 
@@ -196,42 +192,29 @@ class ApiBaseService {
                     : apiMessage || ax.message || 'Đã xảy ra lỗi không xác định';
                 throw new ApiClientError<IApiErrorPayload>(msg, status, statusText, ax.response?.data);
             }
-
             // Lỗi không phải Axios
             throw err;
         }
     }
 
-    // ---- HTTP methods
-    async get<T>(
-        endpoint: string,
-        params?: Record<string, string | number | boolean | null | undefined>,
-        signal?: AbortSignal
-    ): Promise<T> {
-        const cleanParams =
-            params
-                ? Object.fromEntries(
-                    Object.entries(params).filter(([, v]) => v !== null && v !== undefined)
-                )
-                : undefined;
-
-        return this.request<T>({ url: endpoint, method: 'GET', params: cleanParams, signal });
+    public get<T>(endpoint: string, config?: Omit<AxiosRequestConfig, 'url' | 'method'>): Promise<T> {
+        return this.request<T>({ url: endpoint, method: 'GET', ...config });
     }
 
-    async post<T, D = unknown>(endpoint: string, data?: D, signal?: AbortSignal): Promise<T> {
-        return this.request<T>({ url: endpoint, method: 'POST', data, signal });
+    public post<T, D = unknown>(endpoint: string, data?: D, config?: Omit<AxiosRequestConfig, 'url' | 'method' | 'data'>): Promise<T> {
+        return this.request<T>({ url: endpoint, method: 'POST', data, ...config });
     }
 
-    async put<T, D = unknown>(endpoint: string, data?: D, signal?: AbortSignal): Promise<T> {
-        return this.request<T>({ url: endpoint, method: 'PUT', data, signal });
+    public put<T, D = unknown>(endpoint: string, data?: D, config?: Omit<AxiosRequestConfig, 'url' | 'method' | 'data'>): Promise<T> {
+        return this.request<T>({ url: endpoint, method: 'PUT', data, ...config });
     }
 
-    async patch<T, D = unknown>(endpoint: string, data?: D, signal?: AbortSignal): Promise<T> {
-        return this.request<T>({ url: endpoint, method: 'PATCH', data, signal });
+    public patch<T, D = unknown>(endpoint: string, data?: D, config?: Omit<AxiosRequestConfig, 'url' | 'method' | 'data'>): Promise<T> {
+        return this.request<T>({ url: endpoint, method: 'PATCH', data, ...config });
     }
 
-    async delete<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
-        return this.request<T>({ url: endpoint, method: 'DELETE', signal });
+    public delete<T>(endpoint: string, config?: Omit<AxiosRequestConfig, 'url' | 'method'>): Promise<T> {
+        return this.request<T>({ url: endpoint, method: 'DELETE', ...config });
     }
 
     // ---- Upload có progress (type-safe)

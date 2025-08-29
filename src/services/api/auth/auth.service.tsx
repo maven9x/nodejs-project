@@ -10,9 +10,21 @@ class AuthService extends ApiBaseService {
         super({ baseURL: API_BASE });
     }
 
+    /*     public login(credentials: ILoginCredentials): Promise<{ user: IUser; access_token: string; refresh_token: string }> {
+            // Giả sử endpoint là /auth/login
+            return this.post('/auth/login', credentials);
+        } */
     public login(credentials: ILoginCredentials): Promise<{ user: IUser; access_token: string; refresh_token: string }> {
-        // Giả sử endpoint là /auth/login
-        return this.post('/auth/login', credentials);
+        const params = new URLSearchParams();
+        params.append('username', credentials.username);
+        params.append('password', credentials.password);
+        // Gọi hàm post và truyền vào config tùy chỉnh
+        return this.post('/auth/login', params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                
+            },
+        });
     }
 
     /**

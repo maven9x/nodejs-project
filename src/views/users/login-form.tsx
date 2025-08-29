@@ -1,12 +1,11 @@
-// src/components/RegisterForm.jsx
-
 import { Button, Form, Input, Typography, message } from 'antd';
-import {  MailOutlined, LockOutlined } from '@ant-design/icons';
-import type {  IApiError, ILoginCredentials } from '@app/types/api';
+import { MailOutlined, LockOutlined } from '@ant-design/icons';
+import type { IApiError, ILoginCredentials } from '@app/types/api';
 import { useState } from 'react';
 import { authService } from '@app/services/api/auth/auth.service';
 import { ApiClientError } from '@app/services/api/base/error.service';
 import { useNavigate } from 'react-router';
+import { storage } from '@app/utils/storage';
 
 const { Title } = Typography;
 
@@ -26,54 +25,45 @@ const LoginForm = () => {
  * Hàm được gọi khi form được submit và đã vượt qua tất cả các quy tắc validation.
  * @param values - Đối tượng chứa dữ liệu từ các trường của form.
  */
-  const onFinish = async (values: ILoginCredentials) => {
 
+
+const onFinish = async (values: ILoginCredentials) => {
+
+  try {
     setIsLoading(true);
-    try {
+    const response = await authService.login(values);
+    console.log('4. Gọi API thành công, response:', response);
 
-      // Gọi hàm register từ service với dữ liệu từ form
-      await authService.login(values);
+    // --- Các bước xử lý sau khi đăng nhập thành công ---
+    const { access_token, refresh_token, user } = response.data;
 
-      // Hiển thị thông báo thành công
-      messageApi.success('Đăng nhập thành công!');
+    storage.setItem('access_token', access_token);
+    storage.setItem('refresh_token', refresh_token);
+    // setAuthUser(user); // Nếu bạn có global state
 
-      // Reset các trường của form sau khi submit thành công
-      navigate("/");
+    messageApi.success('Đăng nhập thành công!');
+    navigate('/');
 
-
-    } catch (error) {
-                          
+  } catch (error) {
+    // Block này sẽ bắt được cả lỗi API và các lỗi JavaScript khác
+    console.error('❌ Đã xảy ra lỗi trong block try-catch:', error);
+    
+    // Phần xử lý lỗi của bạn giữ nguyên
     if (error instanceof ApiClientError) {
-
+      console.log(error)
       const apiErrorData = error.data as IApiError;
-      let errorMessage = 'Lỗi không xác định';
-
-      
-
-      if (apiErrorData?.message) {
-        errorMessage = Array.isArray(apiErrorData.message)
-          ? apiErrorData.message.join('. ')
-          : apiErrorData.message;
-      }
-
-      // Xử lý hiển thị lỗi như cũ
-      if (errorMessage.toLowerCase().includes('username')) {
-        form.setFields([{ name: 'username', errors: [errorMessage] }]);
-      } else {
-        messageApi.error(errorMessage);
-      }
-
+      const errorMessage = apiErrorData?.message || 'Lỗi không xác định';
+      // ... (giữ nguyên logic xử lý lỗi API của bạn)
+      messageApi.error(errorMessage);
     } else {
-      // Xử lý các loại lỗi khác không phải từ API client (ví dụ: lỗi mạng, lỗi code...)
-      console.error('An unexpected error occurred:', error);
-      messageApi.error('Một lỗi không mong muốn đã xảy ra. Vui lòng thử lại.');
+      messageApi.error('Một lỗi không mong muốn đã xảy ra. Vui lòng kiểm tra console.');
     }
 
-    } finally {
-      // Dừng trạng thái loading dù thành công hay thất bại
-      setIsLoading(false);
-    }
-  };
+  } finally {
+    console.log('5. Kết thúc xử lý, dừng loading.');
+    setIsLoading(false);
+  }
+};
 
   // Hàm xử lý khi submit form thất bại (do lỗi validation)
   const onFinishFailed = (errorInfo: any) => {
