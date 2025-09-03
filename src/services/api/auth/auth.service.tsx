@@ -1,4 +1,4 @@
-import ApiBaseService from "@app/services/api/base/base.service";
+import ApiBaseService from "@app/services/api/apiClient.service";
 import { API_BASE } from "@app/utils/constants";
 import type { ILoginCredentials, IRegisterData, IUser } from "@app/types/api/auth.types";
 
@@ -22,7 +22,7 @@ class AuthService extends ApiBaseService {
         return this.post('/auth/login', params, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                
+
             },
         });
     }

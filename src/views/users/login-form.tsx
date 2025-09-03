@@ -1,142 +1,105 @@
-import { Button, Form, Input, Typography, message } from 'antd';
+import { Button, Form, Input, Typography, message, Checkbox } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
-import type { IApiError, ILoginCredentials } from '@app/types/api';
 import { useState } from 'react';
-import { authService } from '@app/services/api/auth/auth.service';
-import { ApiClientError } from '@app/services/api/base/error.service';
 import { useNavigate } from 'react-router';
-import { storage } from '@app/utils/storage';
+import { authService } from '@app/services/api/auth/auth.service';
+import { ApiClientError } from '@app/services/api';
+import type { IApiErrorPayload, ILoginCredentials } from '@app/types/api';
+
+// B1: Import hook useAuth từ Context
+import { useAuth } from '@app/hooks/useAuth';
 
 const { Title } = Typography;
 
 const LoginForm = () => {
-  // 1. Hook của AntD để quản lý trạng thái và các phương thức của form
-  const [form] = Form.useForm();
+    const [form] = Form.useForm();
+    const [isLoading, setIsLoading] = useState(false);
+    const [messageApi, contextHolder] = message.useMessage();
+    const navigate = useNavigate();
 
-  // 2. State để quản lý trạng thái loading khi đang gọi API
-  const [isLoading, setIsLoading] = useState(false);
+    // B2: Lấy hàm login từ context
+    const { login } = useAuth();
 
-  // 3. Hook của AntD để hiển thị thông báo (thay thế cho useState<string>)
-  const [messageApi, contextHolder] = message.useMessage();
-
-  const navigate = useNavigate();
-
-  /**
- * Hàm được gọi khi form được submit và đã vượt qua tất cả các quy tắc validation.
- * @param values - Đối tượng chứa dữ liệu từ các trường của form.
- */
+    const onFinish = async (values: ILoginCredentials & { remember: boolean }) => {
+        setIsLoading(true);
+        try {
+            const response = await authService.login(values);
+            const { user, access_token, refresh_token } = response;
 
 
-const onFinish = async (values: ILoginCredentials) => {
+            login(user, access_token, refresh_token, values.remember);
+            
+            messageApi.success('Đăng nhập thành công!');
+            navigate('/'); // Chuyển hướng đến trang chủ
 
-  try {
-    setIsLoading(true);
-    const response = await authService.login(values);
-    console.log('4. Gọi API thành công, response:', response);
+        } catch (error) {
+            console.error('❌ Đã xảy ra lỗi khi đăng nhập:', error);
+            if (error instanceof ApiClientError) {
+                const apiErrorData = error.payload as IApiErrorPayload | undefined;
+                const errorMessage = apiErrorData?.message || error.message || 'Lỗi không xác định từ server.';
+                messageApi.error(errorMessage);
+            } else {
+                messageApi.error('Một lỗi không mong muốn đã xảy ra. Vui lòng thử lại.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    // --- Các bước xử lý sau khi đăng nhập thành công ---
-    const { access_token, refresh_token, user } = response.data;
+    const onFinishFailed = () => {
+        message.error('Vui lòng điền đầy đủ và chính xác thông tin!');
+    };
 
-    storage.setItem('access_token', access_token);
-    storage.setItem('refresh_token', refresh_token);
-    // setAuthUser(user); // Nếu bạn có global state
+    return (
+        <>
+            {contextHolder}
+            <div style={{ maxWidth: 400, margin: '50px auto', padding: '24px', border: '1px solid #f0f0f0', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' }}>
+                <Title level={2} style={{ textAlign: 'center', marginBottom: 24 }}>
+                    Đăng nhập
+                </Title>
+                <Form
+                    form={form}
+                    name="login"
+                    onFinish={onFinish}
+                    onFinishFailed={onFinishFailed}
+                    layout="vertical"
+                    initialValues={{ remember: true }}
+                    autoComplete="off"
+                >
+                    {/* Các Form.Item giữ nguyên như cũ */}
+                    <Form.Item
+                        name="username"
+                        label="Tên đăng nhập / Email"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập hoặc email!' }]}
+                    >
+                        <Input prefix={<MailOutlined />} placeholder="Tên đăng nhập hoặc Email" />
+                    </Form.Item>
 
-    messageApi.success('Đăng nhập thành công!');
-    navigate('/');
+                    <Form.Item
+                        name="password"
+                        label="Mật khẩu"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mật khẩu!' },
+                            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' },
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
+                    </Form.Item>
 
-  } catch (error) {
-    // Block này sẽ bắt được cả lỗi API và các lỗi JavaScript khác
-    console.error('❌ Đã xảy ra lỗi trong block try-catch:', error);
-    
-    // Phần xử lý lỗi của bạn giữ nguyên
-    if (error instanceof ApiClientError) {
-      console.log(error)
-      const apiErrorData = error.data as IApiError;
-      const errorMessage = apiErrorData?.message || 'Lỗi không xác định';
-      // ... (giữ nguyên logic xử lý lỗi API của bạn)
-      messageApi.error(errorMessage);
-    } else {
-      messageApi.error('Một lỗi không mong muốn đã xảy ra. Vui lòng kiểm tra console.');
-    }
+                    <Form.Item name="remember" valuePropName="checked">
+                        <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+                    </Form.Item>
 
-  } finally {
-    console.log('5. Kết thúc xử lý, dừng loading.');
-    setIsLoading(false);
-  }
-};
-
-  // Hàm xử lý khi submit form thất bại (do lỗi validation)
-  const onFinishFailed = (errorInfo: any) => {
-    console.log('Failed:', errorInfo);
-    message.error('Vui lòng điền đầy đủ thông tin!');
-  };
-
-  return (
-    <>
-      {contextHolder}
-      <div style={{ maxWidth: 400, margin: '50px auto', padding: '24px', border: '1px solid #f0f0f0', borderRadius: '8px' }}>
-        <Title level={2} style={{ textAlign: 'center', marginBottom: 24 }}>
-          Đăng nhập
-        </Title>
-        <Form
-          form={form}
-          name="login"
-          onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
-          layout="vertical"
-          initialValues={{ remember: true }}
-          autoComplete="off"
-        >
-
-          {/* Trường Email */}
-          <Form.Item
-            name="username"
-            label="Email"
-            rules={[
-              {
-                required: true,
-                message: 'Vui lòng nhập email!',
-              },
-              {
-                type: 'email',
-                message: 'Email không đúng định dạng!',
-              },
-            ]}
-          >
-            <Input prefix={<MailOutlined />} placeholder="Email" />
-          </Form.Item>
-
-          {/* Trường Mật khẩu */}
-          <Form.Item
-            name="password"
-            label="Mật khẩu"
-            rules={[
-              {
-                required: true,
-                message: 'Vui lòng nhập mật khẩu!',
-              },
-              {
-                min: 6,
-                message: 'Mật khẩu phải có ít nhất 6 ký tự!',
-              },
-            ]}
-            hasFeedback // Hiển thị icon feedback (✓ hoặc ✗)
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
-          </Form.Item>
-
-
-          {/* Nút Đăng ký */}
-          <Form.Item>
-            {/* ✅ Truyền state `isLoading` vào prop `loading` của Button */}
-            <Button type="primary" htmlType="submit" style={{ width: '100%' }} loading={isLoading}>
-              Đăng nhập
-            </Button>
-          </Form.Item>
-        </Form>
-      </div>
-    </>
-  );
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit" style={{ width: '100%' }} loading={isLoading}>
+                            Đăng nhập
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </div>
+        </>
+    );
 };
 
 export default LoginForm;
+

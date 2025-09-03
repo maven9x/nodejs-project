@@ -1,3 +1,3 @@
-export * from "./api-error.types";
+export * from "./apiError.types";
 export * from "./auth.types";
-export * from "./base.types";
+export * from "./apiBase.types";

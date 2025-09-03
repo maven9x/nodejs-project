@@ -2,10 +2,10 @@
 
 import { Button, Form, Input, InputNumber, Select, Typography, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
-import type {  IApiError, IRegisterData } from '@app/types/api';
+import type { IApiError, IRegisterData } from '@app/types/api';
 import { useState } from 'react';
 import { authService } from '@app/services/api/auth/auth.service';
-import { ApiClientError } from '@app/services/api/base/error.service';
+import { ApiClientError } from '@app/services/api/apiClientError.service';
 
 const { Title } = Typography;
 
@@ -36,32 +36,32 @@ const RegisterForm = () => {
       form.resetFields();
 
     } catch (error) {
-      
-          // ✅ BƯỚC QUAN TRỌNG: Kiểm tra kiểu của lỗi
-    if (error instanceof ApiClientError) {
-      // Bên trong khối if này, TypeScript biết chắc chắn `error` là một ApiClientError
-      // và `error.data` sẽ có kiểu là IApiError.
-      const apiErrorData = error.data as IApiError;
-      
-      let errorMessage = 'Lỗi không xác định';
-      if (apiErrorData?.message) {
-        errorMessage = Array.isArray(apiErrorData.message)
-          ? apiErrorData.message.join('. ')
-          : apiErrorData.message;
-      }
-      
-      // Xử lý hiển thị lỗi như cũ
-      if (errorMessage.toLowerCase().includes('email')) {
-        form.setFields([{ name: 'email', errors: [errorMessage] }]);
-      } else {
-        messageApi.error(errorMessage);
-      }
 
-    } else {
-      // Xử lý các loại lỗi khác không phải từ API client (ví dụ: lỗi mạng, lỗi code...)
-      console.error('An unexpected error occurred:', error);
-      messageApi.error('Một lỗi không mong muốn đã xảy ra. Vui lòng thử lại.');
-    }
+      // ✅ BƯỚC QUAN TRỌNG: Kiểm tra kiểu của lỗi
+      if (error instanceof ApiClientError) {
+        // Bên trong khối if này, TypeScript biết chắc chắn `error` là một ApiClientError
+        // và `error.data` sẽ có kiểu là IApiError.
+        const apiErrorData = error.data as IApiError;
+
+        let errorMessage = 'Lỗi không xác định';
+        if (apiErrorData?.message) {
+          errorMessage = Array.isArray(apiErrorData.message)
+            ? apiErrorData.message.join('. ')
+            : apiErrorData.message;
+        }
+
+        // Xử lý hiển thị lỗi như cũ
+        if (errorMessage.toLowerCase().includes('email')) {
+          form.setFields([{ name: 'email', errors: [errorMessage] }]);
+        } else {
+          messageApi.error(errorMessage);
+        }
+
+      } else {
+        // Xử lý các loại lỗi khác không phải từ API client (ví dụ: lỗi mạng, lỗi code...)
+        console.error('An unexpected error occurred:', error);
+        messageApi.error('Một lỗi không mong muốn đã xảy ra. Vui lòng thử lại.');
+      }
 
     } finally {
       // Dừng trạng thái loading dù thành công hay thất bại
